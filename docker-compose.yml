@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: filesender-db
+    restart: always
+    environment:
+      POSTGRES_DB: filesender
+      POSTGRES_USER: filesender
+      POSTGRES_PASSWORD: filesenderpass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filesender -d filesender"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+  filesender:
+    build: .
+    container_name: filesender-app
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./config/config.php:/opt/filesender/config/config.php
+      - files_data:/opt/filesender/files
+      - log_data:/opt/filesender/log
+
+volumes:
+  pgdata:
+  files_data:
+  log_data:
